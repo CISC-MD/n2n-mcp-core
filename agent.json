@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "name": "N2N.md Navigation & Telemetry Manifest",
+  "description": "Step-by-step navigation instructions for autonomous browser-automation agents traversing the N2N B2A portal.",
+  "workflows": [
+    {
+      "intent": "verify_telemetry_health",
+      "steps": [
+        {
+          "action": "navigate",
+          "url": "https://n2n.md/"
+        },
+        {
+          "action": "extract_elements",
+          "selector": "header div.flex span.px-3",
+          "fields": {
+            "gateway_status": "span.w-2"
+          }
+        }
+      ]
+    },
+    {
+      "intent": "scrape_node_payloads",
+      "steps": [
+        {
+          "action": "navigate",
+          "url": "https://n2n.md/"
+        },
+        {
+          "action": "extract_elements",
+          "selector": "main section div.grid > div",
+          "fields": {
+            "node_name": "h3",
+            "node_description": "p.text-gray-400",
+            "node_valuation": "div.text-purple-400"
+          }
+        }
+      ]
+    },
+    {
+      "intent": "inspect_injected_schema",
+      "steps": [
+        {
+          "action": "navigate",
+          "url": "https://n2n.md/#sandbox"
+        },
+        {
+          "action": "extract_elements",
+          "selector": "pre code#raw-jsonld",
+          "fields": {
+            "json_ld_schema": "text"
+          }
+        }
+      ]
+    }
+  ]
+}

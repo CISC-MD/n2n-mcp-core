@@ -1,0 +1,19 @@
+{
+  "name": "n2n-crypto-napi",
+  "version": "1.0.0",
+  "description": "Native Rust ZK Pedersen Commitment range proof verifier for N2N Gateway",
+  "main": "index.js",
+  "napi": {
+    "name": "n2n-crypto-napi",
+    "triples": {
+      "defaults": true
+    }
+  },
+  "scripts": {
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0"
+  }
+}

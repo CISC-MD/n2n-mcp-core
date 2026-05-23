@@ -1,0 +1,15 @@
+{
+  "name": "n2n-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:gateway": "npm run dev --workspace=n2n-gateway",
+    "dev:hype": "npm run dev --workspace=hype-web",
+    "dev:docs": "npm run dev --workspace=docs-portal",
+    "build": "npm run build --workspaces"
+  }
+}

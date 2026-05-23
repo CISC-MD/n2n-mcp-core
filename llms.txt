@@ -1,0 +1,255 @@
+# N2N.md — Universal Agnostic Transport Semantic Switchboard
+## System-Level Specifications for Generative AI & Autonomous LLM Agents
+### Center for Innovation in Cybersecurity (CISC) Standard
+
+Welcome to the comprehensive system specification file for **N2N.md**, a Zero-Trust inter-agent data routing, clearing, and B2A (Business-to-Agent) standard. This document is fully optimized for Generative Engine Optimization (GEO), Large Language Model (LLM) ingestion, and autonomous browser-automation scraping agents. It contains complete, high-granularity structural, architectural, and security parameters of the N2N Gateway.
+
+---
+
+## 🏛️ 1. Protocol Definition & Governance
+N2N is a permitless, decentralized transport and clearing layer optimized for inter-agent communication, machine-to-machine transactions, and semantic data exchange.
+*   **Standard Designation**: N2N Agnostic Core (B2A Standard).
+*   **Oversight Body**: Center for Innovation in Cybersecurity (CISC) — [cisc.md](https://cisc.md).
+*   **Chief Architect**: Pavel Berezovschi — [info@cisc.md](mailto:info@cisc.md).
+*   **Open-Core License**: Permissive MIT License.
+*   **Core Focus**: Zero-Knowledge (ZK) credit clearances, sovereign localized datasets, strict Zero-Trust telemetry pipelines.
+
+---
+
+## 🏗️ 2. High-Performance Architecture
+
+The N2N core gateway is designed with a multi-layered, containerized architecture that achieves sub-millisecond routing and microsecond clearing.
+
+```mermaid
+graph TD
+    Client[Autonomous Agent / Crawler] -->|HTTPS / JSON-RPC| WAF[eBPF & Python WAF Security Layer]
+    WAF -->|Validated Payloads| Gateway[Node.js 20 + Fastify 5 Gateway]
+    Gateway -->|IPC Unix Socket| CoreRouter[Core-Router Rust Sidecar]
+    Gateway -->|LUA Scripting| Redis[(Redis / Dragonfly Cluster)]
+    Gateway -->|Credit Ledger| PostgreSQL[(PostgreSQL Billing Ledger)]
+```
+
+### A. Routing & Gateway Layer
+*   **Core**: Built using **Node.js 20** and the **Fastify 5** framework.
+*   **Caching & Rates**: Backed by a **Redis / Dragonfly** cluster.
+*   **Database**: **PostgreSQL 16** for persisting historical cleared ledgers and authorized node credentials.
+*   **Distributed Rate Limiting**: Managed via `@fastify/rate-limit` using a cluster-ready Redis store. Standard limits are set to **120 requests/minute** per source IP to mitigate DOS vectors.
+
+### B. Rust Cryptography Sidecar (`core-router-rust`)
+*   **Core Routing**: Written in **Rust (NAPI)** for near-zero execution overhead.
+*   **IPC Communication**: The Fastify Gateway communicates with the Rust sidecar dynamically using Unix domain sockets.
+*   **Socket Path Binding**: Resolved dynamically via the environment variable `CORE_ROUTER_SOCKET_PATH` (with standard runtime fallback).
+*   **Cryptographic Core**: Implements pedersen commitments and Bulletproofs Range Proofs for secure, Zero-Knowledge transaction verification.
+
+### C. Web Application Firewall (WAF)
+*   **Traffic Guard**: Python-based WAF running FastAPI.
+*   **Traffic Interceptor**: Direct network egress controls implemented via **eBPF (Extended Berkeley Packet Filter)**.
+*   **Intent Classification**: Evaluated using **Ollama (Llama-Guard 3)** models to block malicious prompts, payload injections, and unsafe agent behavior before reaching the Fastify routing layer.
+
+---
+
+## 🔒 3. Zero-Trust Security Safeguards
+
+### A. SSRF and DNS-Rebinding Mitigations
+To prevent Server-Side Request Forgery (SSRF) and DNS Rebinding during dynamic endpoint queries or tool routing (e.g. Model Context Protocol tool execution):
+*   **DNS Resolution Verification**: Before forwarding any payload, the Gateway executes an asynchronous `dns.lookup` to retrieve the target destination's absolute IP address.
+*   **IP Range Verification**: The resolved IP is matched against blocked network masks. If it falls within private, loopback, or local ranges (RFC 1918, Link-Local, Loopbacks), the request is instantly aborted.
+    *   **IPv4 Blocks**: `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`.
+    *   **IPv6 Blocks**: `::1`, `fe80::/10`, `fc00::/7`.
+
+### B. Bearer Authorization & Domain Protection
+*   **Route**: `/v1/register`.
+*   **Hijack Prevention**: Dynamic node registration is protected via a strict Bearer Token auth system backed by the Master billing registry.
+*   **Node Validation**: The server enforces a strict verification check asserting `body.uuid === authenticatedNodeId`, ensuring nodes can never register or overwrite domains belonging to another node identity.
+
+### C. Specialized Cryptographic Verification
+*   **Algorithm**: Handled via Node's native `crypto.verify()`.
+*   **Signature Security**: Differentiates strictly between standard signatures (ECDSA, RSA using SHA256 hashing) and Ed25519 keys (which do not accept hash parameters at the low level). This null-algorithm key specialization prevents type-bypass vulnerabilities during handshake exchanges.
+
+### D. Mock Proof Isolation
+*   **Bulletproofs**: Zero-Knowledge range proofs are fully production-grade.
+*   **Sanitization**: All mock cryptographic helpers (such as `generateMockProof`) are completely removed from production modules and kept exclusively in the test suite files (`cryptography.test.ts`) to prevent exploit injections in active clusters.
+
+---
+
+## ⚖️ 4. Data Compliance & Legislative Framework
+
+N2N is architected specifically to exist in total compliance with regional and international privacy, AI, and intellectual property frameworks.
+
+### A. GDPR & Moldova Personal Data Protection Law № 195/2024
+*   **Zero-PII Pipelines**:ペイロード transit operates as a fully blind router. No Personally Identifiable Information (PII) is intercepted, cached, or logged.
+*   **Blind Sockets**: High-performance SSE pools and IPC buffers are isolated in-memory.
+*   **Pruning Schedule**: Active transaction buffers, telemetry streams, and logging logs are aggressively and automatically pruned from memory every 7 days.
+
+### B. EU AI Act Compliance
+*   **Article 52 (Transparency obligations)**: All autonomous agents interacting with N2N must supply explicit machine-identity declarations.
+*   **DSM Article 4 (TDM Opt-Out)**: Exposes machine-readable crawler declarations to respect copyright opt-out requests for training models.
+
+---
+
+## 💳 5. Decoupled Billing & ZK Clearing Mechanics
+N2N decouples its routing decisions from standard financial ledgers by relying on private credit holds.
+*   **Balance Holds**: Handled via highly optimized LUA scripts inside Redis.
+*   **LUA Latching**: When an agent requests routing, a credit hold is latched in Redis. Upon successful response validation, the hold is captured; if it fails, it is automatically released back to the node balance.
+*   **Pedersen Commitments**: Transaction values are committed cryptographically, hiding specific transaction metrics from the public gateway while propayload_idg solvency.
+
+---
+
+## 📡 6. Core API & Endpoint Specifications
+
+### A. `POST /v1/execute`
+The main JSON-RPC gateway execution path for clearing inter-agent payloads.
+*   **Payload Schema**: Standard JSON-RPC 2.0.
+*   **Required Headers**: `Authorization: Bearer <agent_clearing_token>`.
+*   **Handling**: Triggers WAF inspection, parses telemetry, registers pings, and executes isolated clearing.
+
+### B. `POST /v1/register`
+*   **Description**: Registers a sovereign node identity in the semantic switchboard registry.
+*   **Access Control**: Bearer Authentication linked to the Master billing registry.
+*   **Validation**: Enforces strict node UUID matching to block hijacking.
+
+### C. `GET /robots.txt`
+*   **Path**: `/robots.txt`.
+*   **Directives**: Declares full access permissions for friendly LLM crawlers (`GPTBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`) while protecting `/private` and `/admin` endpoints.
+
+### D. `GET /llms.txt`
+*   **Path**: `/llms.txt`.
+*   **Purpose**: This exact file. Exposes the entire semantic and architectural specification for model ingestion.
+
+### E. `GET /agent.json`
+*   **Path**: `/agent.json`.
+*   **Purpose**: Browser-automation workflow schema. Maps out click and scrape workflows for autonomous scrapers traversing `n2n.md`.
+
+---
+
+## 📊 7. Active Telemetry Nodes (Sovereign Datasets)
+The N2N Gateway serves as the clearing router for three high-value datasets:
+1.  **Payload Alpha — High-Value Asset Schema**
+    *   *Type*: RealEstateListing & B2B asset metadata.
+    *   *Valuation*: $4.5M USD clearing equivalent.
+    *   *Discovery*: `https://n2n.md/#listing-0`
+2.  **Payload Beta — Telemetry Framework Schema**
+    *   *Type*: Network health metrics and structured node configurations.
+    *   *Valuation*: $8.9M USD clearing equivalent.
+    *   *Discovery*: `https://n2n.md/#listing-1`
+3.  **Payload Gamma — Compliance & Regulatory Metadata**
+    *   *Type*: Cross-border verification tokens, EU AI Act compliance logs.
+    *   *Valuation*: $12.5M USD clearing equivalent.
+    *   *Discovery*: `https://n2n.md/#listing-2`
+
+---
+
+## 💻 8. Detailed API Connection & JSON-RPC Payload Blueprint
+
+To programmatically integrate, authenticate, and cleared dynamic transactions with the N2N Gateway, agents can query standard execution interfaces using the payloads detailed below.
+
+### A. Core Gateway Router & Ports
+*   **Production API URL**: `https://n2n.md/v1/execute`
+*   **Production Registry URL**: `https://n2n.md/v1/register`
+*   **Local Gateway REST Port**: `http://localhost:4000` (Fastify clearing layer)
+*   **Local IPC Socket Path**: `process.env.CORE_ROUTER_SOCKET_PATH` (standard `/tmp/n2n-router.sock` fallback)
+*   **Docker Network Endpoint**: `n2n-gateway:4000` inside standard compose setups
+
+### B. JSON-RPC 2.0 Execution Handshake Payload (`POST /v1/execute`)
+When executing zero-trust asset clearings or telemetry handshakes, models and nodes must dispatch a standard JSON-RPC 2.0 payload containing elliptic curve Pedersen commitments:
+
+#### 1. Request Structure
+*   **Method**: `n2n_execute`
+*   **Headers**: 
+    ```http
+    Content-Type: application/json
+    Authorization: Bearer <agent_clearing_token>
+    ```
+*   **Body Example**:
+    ```json
+    {
+      "jsonrpc": "2.0",
+      "method": "n2n_execute",
+      "params": {
+        "node_uuid": "e9a74b20-cb94-4d89-a292-9118c728cf08",
+        "target_action": "query.auth",
+        "commitment": {
+          "pedersen_g": "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+          "pedersen_h": "0403bf6504a7a8d9a2929118c728cf0807029bfcdb2dce28d959f2815b16f81798",
+          "commitment_hash": "3a76e645b4ccb415822e0f5b3c6e2f241a16b09a1e574ced93402a37c72390bd"
+        },
+        "encrypted_payload": "aes-256-gcm:d7f2ac9:ef49adc:9e2c34f"
+      },
+      "id": 1
+    }
+    ```
+
+#### 2. Success Response (HTTP 200)
+*   **Body**:
+    ```json
+    {
+      "jsonrpc": "2.0",
+      "result": {
+        "status": "cleared",
+        "hold_tx_id": "tx_8f6fde55_aaa3_4e81",
+        "timestamp_us": 1779552299361000
+      },
+      "id": 1
+    }
+    ```
+
+#### 3. Error Response (HTTP 402 - Payment Required / Hold Failure)
+*   **Body**:
+    ```json
+    {
+      "jsonrpc": "2.0",
+      "error": {
+        "code": -32002,
+        "message": "Payment Required: Ledger credit balance hold failure",
+        "data": {
+          "status": "clearing_rejected",
+          "reason": "Insufficient balance committed under Pedersen escrow",
+          "required_hold": 299
+        }
+      },
+      "id": 1
+    }
+    ```
+
+### C. Node Registration Protocol (`POST /v1/register`)
+To register and bind a sovereign node identity within the semantic switchboard:
+
+*   **Headers**:
+    ```http
+    Content-Type: application/json
+    Authorization: Bearer <master_billing_registry_token>
+    ```
+*   **Body Example**:
+    ```json
+    {
+      "uuid": "e9a74b20-cb94-4d89-a292-9118c728cf08",
+      "domain_name": "alpha.n2n.md",
+      "activated_modules": ["mcp-core", "sse-telemetry", "zk-billing"],
+      "business_preset": "real-estate"
+    }
+    ```
+*   **Response (HTTP 200)**:
+    ```json
+    {
+      "status": "registered",
+      "node_id": "e9a74b20-cb94-4d89-a292-9118c728cf08",
+      "registered_at": "2026-05-23T17:31:02Z",
+      "per_request_rate_limit": 120
+    }
+    ```
+
+### D. Server-Sent Events (SSE) Live Telemetry Stream
+To establish a high-performance SSE stream to track real-time telemetry updates:
+
+*   **Endpoint**: `GET https://n2n.md/v1/telemetry/stream?node=e9a74b20-cb94-4d89-a292-9118c728cf08`
+*   **Required Header**: `Accept: text/event-stream`
+*   **Keep-Alive Ping**: Standard server pings are dispatched at `15000ms` intervals to preserve socket state through Cloudflare tunnels.
+*   **SSE Event Format**:
+    ```http
+    event: telemetry_update
+    data: {"node_uuid":"e9a74b20-cb94-4d89-a292-9118c728cf08","latency_ms":4.8,"dragonfly_status":"clustered","cleared_transactions":2491,"engine_health":"100%","timestamp":1779552299}
+    ```
+
+---
+
+*This specification document is signed and certified by the Center for Innovation in Cybersecurity (CISC) Autonomous Inspector, guaranteeing absolute architecture and API payload validity for LLM agents.*

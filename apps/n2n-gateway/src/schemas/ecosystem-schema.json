@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Уникальный идентификатор проекта"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "api_endpoint": {
+      "type": "string",
+      "format": "uri"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "inactive"]
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "properties": { "type": "object" },
+              "required": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["type"]
+          },
+          "api_endpoint": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": ["name", "description", "parameters", "api_endpoint"],
+        "additionalProperties": false
+      }
+    },
+    "fallbacks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "api_endpoint": { "type": "string", "format": "uri" }
+        },
+        "required": ["api_endpoint"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["project_id", "name", "description", "keywords", "api_endpoint", "status"],
+  "additionalProperties": false
+}
